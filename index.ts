@@ -18,10 +18,9 @@ const bucketPublicAccessBlock = new aws.s3.BucketPublicAccessBlock("bucketPublic
 });
 
 // Upload a sample index.html file to the S3 bucket
-const indexContent = `<html><body><h1>Hello, Pulumi!</h1><p>This is a static website deployed with Pulumi.</p></body></html>`;
 const indexObject = new aws.s3.BucketObject("index.html", {
     bucket: bucket.bucket,
-    content: indexContent,
+    content: `<html><body><h1>Hello, Pulumi!</h1><p>This is a static website deployed with Pulumi.</p></body></html>`,
     contentType: "text/html",
 });
 
@@ -38,3 +37,44 @@ const bucketPolicy = new aws.s3.BucketPolicy("bucketPolicy", {
                 Resource: `${arn}/*`,
             },
         ],
+    })),
+    dependsOn: [bucketPublicAccessBlock], // Ensure the public access block is applied first
+});
+
+// Create a CloudFront distribution to serve the S3 bucket content
+const distribution = new aws.cloudfront.Distribution("my-distribution", {
+    enabled: true,
+    origins: [
+        {
+            domainName: bucket.bucketRegionalDomainName,
+            originId: bucket.arn,
+        },
+    ],
+    defaultRootObject: "index.html",
+    defaultCacheBehavior: {
+        targetOriginId: bucket.arn,
+        viewerProtocolPolicy: "redirect-to-https",
+        allowedMethods: ["GET", "HEAD", "OPTIONS"],
+        cachedMethods: ["GET", "HEAD", "OPTIONS"],
+        forwardedValues: {
+            queryString: false,
+            cookies: { forward: "none" },
+        },
+        minTtl: 0,
+        defaultTtl: 86400,
+        maxTtl: 31536000,
+    },
+    priceClass: "PriceClass_100",
+    viewerCertificate: {
+        cloudfrontDefaultCertificate: true,
+    },
+    restrictions: {
+        geoRestriction: {
+            restrictionType: "none",
+        },
+    },
+});
+
+// Export the S3 bucket name and CloudFront distribution URL
+export const bucketName = bucket.bucket;
+export const websiteUrl = distribution.domainName;
