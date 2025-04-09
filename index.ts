@@ -38,7 +38,6 @@ const bucketPolicy = new aws.s3.BucketPolicy("bucketPolicy", {
             },
         ],
     })),
-    dependsOn: [bucketPublicAccessBlock], // Ensure the public access block is applied first
 });
 
 // Create a CloudFront distribution to serve the S3 bucket content
