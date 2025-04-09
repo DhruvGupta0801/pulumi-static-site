@@ -6,7 +6,7 @@ const bucket = new aws.s3.Bucket("my-static-site-bucket", {
     website: {
         indexDocument: "index.html",
     },
-    acl: "public-read",
+    // Remove acl: "public-read"
 });
 
 // Upload a sample index.html file to the S3 bucket
@@ -15,7 +15,7 @@ const indexObject = new aws.s3.BucketObject("index.html", {
     bucket: bucket.bucket,
     content: indexContent,
     contentType: "text/html",
-    acl: "public-read",
+    // Remove acl: "public-read"
 });
 
 // Attach a bucket policy to make the S3 bucket publicly readable
